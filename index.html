@@ -43,8 +43,6 @@ h1{font-size:26px;margin:0;letter-spacing:-0.02em;font-weight:700}
 .tag{font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--text-2)}
 .tag b{color:var(--text)}
 button.theme{font:inherit;font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--text);cursor:pointer}
-.legend-note{font-size:12px;color:var(--text-2);margin:-8px 0 18px}
-.legend-note .u{color:var(--up);font-weight:600}.legend-note .d{color:var(--down);font-weight:600}
 h2{font-size:15px;margin:30px 0 12px;display:flex;align-items:baseline;gap:10px;font-weight:700}
 h2 small{font-weight:400;color:var(--text-3);font-size:12px}
 .grid{display:grid;gap:12px}
@@ -146,7 +144,6 @@ h1{font-size:36px;font-weight:800;letter-spacing:-0.03em;word-break:keep-all}
 .tag b{font-weight:700}
 button.theme{border:0;background:var(--chip);padding:7px 12px;font-size:13px;font-weight:600}
 button.theme:hover{filter:brightness(.97)}
-.legend-note{margin:4px 0 8px;font-size:13px;color:var(--text-3)}
 h2{font-size:21px;font-weight:800;letter-spacing:-0.03em;margin:40px 0 14px}
 h2 small{font-size:13px;font-weight:500;color:var(--text-3)}
 .grid{gap:12px}
@@ -231,7 +228,6 @@ html:not(.show-nums) .num-sec{display:none!important}
 .num-toggle:hover{filter:brightness(.98)}
 .num-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .num-toggle-note{font-size:13px;color:var(--text-3)}
-.legend-note b{color:var(--text-2)}
 </style>
 </head>
 <body>
@@ -251,7 +247,6 @@ html:not(.show-nums) .num-sec{display:none!important}
   </div>
 </header>
 <nav class="seg-wrap" aria-label="시장 선택"><div class="seg" role="tablist"><button role="tab" data-m="all" id="seg-all">전체</button><button role="tab" data-m="us" id="seg-us">🇺🇸 미국</button><button role="tab" data-m="kr" id="seg-kr">🇰🇷 한국</button></div></nav>
-<p class="legend-note">어려운 숫자 대신 <b>무슨 일이 있었고, 그래서 어떻게 됐는지</b> 쉽게 풀었어요. <span class="u">빨강 ↑ 올랐어요</span> · <span class="d">파랑 ↓ 내렸어요</span></p>
 
 <h2>☀️ 오늘 한눈에 <small id="todayLabel"></small></h2>
 <div class="grid keys" id="todayGrid"><div class="card today-card" id="today"></div></div>
