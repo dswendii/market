@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="미국·한국 증시 소식을 매일 쉬운 말로 정리한 대시보드">
+<title>증시 데일리 대시보드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f4f2ee; --surface:#ffffff; --surface-2:#f7f6f3; --line:#e3e0da;
+  --text:#191919; --text-2:#5f5f5f; --text-3:#8a8a8a;
+  --up:#dc3c3d; --down:#2370cd; --neutral:#9c9c9c;
+  --up-soft:#fbe4e4; --down-soft:#e0ecfb;
+  --accent:#191919; --grid:#ece9e3;
+}
+@media (prefers-color-scheme:dark){
+  :root:where(:not([data-theme="light"])){
+    color-scheme:dark;
+    --bg:#121212; --surface:#1b1b1b; --surface-2:#222; --line:#2f2f2f;
+    --text:#efefef; --text-2:#a8a8a8; --text-3:#7a7a7a;
+    --up:#eb6263; --down:#519ced; --neutral:#6f6f6f;
+    --up-soft:#3a2020; --down-soft:#1b2a3d; --accent:#efefef; --grid:#2a2a2a;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#121212; --surface:#1b1b1b; --surface-2:#222; --line:#2f2f2f;
+  --text:#efefef; --text-2:#a8a8a8; --text-3:#7a7a7a;
+  --up:#eb6263; --down:#519ced; --neutral:#6f6f6f;
+  --up-soft:#3a2020; --down-soft:#1b2a3d; --accent:#efefef; --grid:#2a2a2a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"IBM Plex Sans KR",system-ui,sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.num{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.wrap{max-width:1240px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px;border-bottom:2px solid var(--accent);padding-bottom:14px;margin-bottom:20px}
+h1{font-size:26px;margin:0;letter-spacing:-0.02em;font-weight:700}
+.sub{color:var(--text-2);font-size:13px;margin-top:4px}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--text-2)}
+.tag b{color:var(--text)}
+button.theme{font:inherit;font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--text);cursor:pointer}
+.legend-note{font-size:12px;color:var(--text-2);margin:-8px 0 18px}
+.legend-note .u{color:var(--up);font-weight:600}.legend-note .d{color:var(--down);font-weight:600}
+h2{font-size:15px;margin:30px 0 12px;display:flex;align-items:baseline;gap:10px;font-weight:700}
+h2 small{font-weight:400;color:var(--text-3);font-size:12px}
+.grid{display:grid;gap:12px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 14px 12px;position:relative}
+.tile .lbl{font-size:12px;color:var(--text-2);display:flex;justify-content:space-between;gap:6px}
+.tile .lbl span.d{color:var(--text-3)}
+.tile .val{font-size:22px;font-weight:500;margin:4px 0 2px;letter-spacing:-0.01em}
+.chg{font-size:13px;font-weight:500}
+.chg.up{color:var(--up)}.chg.down{color:var(--down)}.chg.flat{color:var(--text-2)}
+.tile .note{font-size:11.5px;color:var(--text-3);margin-top:6px;line-height:1.4}
+.tile.hl{border-color:var(--accent)}
+.cards2{grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
+.cards2.wide{grid-template-columns:repeat(auto-fit,minmax(min(100%,480px),1fr))}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
+.card h3{margin:0 0 2px;font-size:14px;font-weight:600}
+.card .cap{font-size:12px;color:var(--text-3);margin-bottom:12px}
+svg{display:block;width:100%;height:auto;overflow:visible}
+svg text{font-family:"IBM Plex Sans KR",sans-serif;fill:var(--text-2);font-size:12px}
+svg .mono{font-family:"IBM Plex Mono",monospace}
+svg .lab{fill:var(--text);font-size:12px}
+.hit{fill:transparent;cursor:default}
+.hit:hover + .bar, .row:hover .bar{opacity:.8}
+#tip{position:fixed;pointer-events:none;background:var(--text);color:var(--surface);font-size:12px;padding:7px 10px;border-radius:6px;opacity:0;transition:opacity .08s;z-index:10;max-width:260px;line-height:1.45}
+#tip b{font-weight:600}
+details{margin-top:10px;font-size:12px;color:var(--text-2)}
+details summary{cursor:pointer;color:var(--text-3)}
+table{width:100%;border-collapse:collapse;margin-top:6px}
+td,th{padding:4px 6px;border-bottom:1px solid var(--line);text-align:left}
+td.r,th.r{text-align:right}
+.news{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.news .card{padding:14px}
+.news .k{font-size:11px;font-weight:600;letter-spacing:.04em;color:var(--text-3);text-transform:uppercase}
+.news h4{margin:4px 0 6px;font-size:14px;font-weight:600}
+.news p{margin:0;color:var(--text-2);font-size:13px}
+.cal{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.day{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px}
+.day .dt{font-weight:700;font-size:13px;display:flex;justify-content:space-between}
+.day .dt span{color:var(--text-3);font-weight:400}
+.day ul{margin:8px 0 0;padding:0;list-style:none}
+.day li{font-size:12.5px;padding:3px 0;border-top:1px dashed var(--line);color:var(--text-2)}
+.day li:first-child{border-top:0}
+.day li.star{color:var(--text);font-weight:600}
+.day.hot{border-color:var(--accent)}
+.prob{display:flex;height:28px;border-radius:6px;overflow:hidden;gap:2px;margin:6px 0 8px}
+.prob div{display:flex;align-items:center;padding:0 8px;font-size:12px;white-space:nowrap}
+.dots{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.dotrow{display:flex;align-items:center;gap:10px;font-size:12px}
+.dotrow .r{width:64px;white-space:nowrap;color:var(--text-2)}
+.dotrow .d{display:flex;gap:4px}
+.dotrow .d i{width:12px;height:12px;border-radius:50%;background:var(--down);display:block}
+footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-size:12px;color:var(--text-3)}
+footer a{color:var(--text-2)}
+footer ol{padding-left:18px;margin:6px 0 0;columns:2;column-gap:28px}
+@media (max-width:640px){footer ol{columns:1} h1{font-size:21px}.tile .val{font-size:19px}}
+
+/* edit mode: open the page with #edit to show part numbers */
+.card,.day{position:relative}
+.edit-badge{display:none}
+html.edit .edit-badge{display:inline-flex;position:absolute;top:-9px;right:8px;z-index:5;font:600 11px/1 "IBM Plex Mono",monospace;padding:4px 6px;border-radius:5px;background:var(--accent);color:var(--surface);pointer-events:none}
+html.edit h2 .edit-badge{position:static;margin-right:2px}
+html.edit .card,html.edit .tile,html.edit .day{outline:1px dashed var(--text-3);outline-offset:2px}
+.edit-bar{display:none}
+html.edit .edit-bar{display:block;position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--accent);color:var(--surface);font-size:12.5px;padding:8px 12px;border-radius:8px;margin-bottom:16px}
+
+/* ===== Toss-style skin: grey ground, borderless rounded white cards, big bold numbers ===== */
+:root{
+  --bg:#f2f4f6; --surface:#ffffff; --surface-2:#f9fafb; --line:#e5e8eb;
+  --text:#191f28; --text-2:#4e5968; --text-3:#8b95a1;
+  --up:#f04452; --down:#3182f6; --neutral:#b0b8c1;
+  --up-soft:#fff0f1; --down-soft:#e8f3ff; --accent:#3182f6; --grid:#f2f4f6;
+  --ink:#191f28; --chip:#f2f4f6;
+}
+@media (prefers-color-scheme:dark){
+  :root:where(:not([data-theme="light"])){
+    --bg:#101013; --surface:#1c1c21; --surface-2:#24242a; --line:#2c2c35;
+    --text:#ececef; --text-2:#b0b0ba; --text-3:#7e7e88;
+    --up:#f45d6a; --down:#4f95f8; --neutral:#4d4d57;
+    --up-soft:#3a1d22; --down-soft:#17263d; --accent:#4f95f8; --grid:#26262d;
+    --ink:#ececef; --chip:#2a2a31;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#101013; --surface:#1c1c21; --surface-2:#24242a; --line:#2c2c35;
+  --text:#ececef; --text-2:#b0b0ba; --text-3:#7e7e88;
+  --up:#f45d6a; --down:#4f95f8; --neutral:#4d4d57;
+  --up-soft:#3a1d22; --down-soft:#17263d; --accent:#4f95f8; --grid:#26262d;
+  --ink:#ececef; --chip:#2a2a31;
+}
+body{font-family:"Noto Sans KR","Apple SD Gothic Neo",system-ui,sans-serif;letter-spacing:-0.01em}
+.num{font-family:inherit;font-variant-numeric:tabular-nums;letter-spacing:-0.02em}
+svg text,svg .mono{font-family:"Noto Sans KR",sans-serif;font-variant-numeric:tabular-nums;fill:var(--text-3)}
+svg .lab{fill:var(--text-2);font-size:12.5px;font-weight:500}
+.wrap{max-width:1120px}
+header.top{border-bottom:0;padding-bottom:4px;margin-bottom:10px}
+h1{font-size:28px;font-weight:800;letter-spacing:-0.03em}
+.sub{font-size:14px;color:var(--text-3)}
+.tag{border:0;background:var(--surface);font-size:13px;padding:7px 12px;color:var(--text-2)}
+.tag b{font-weight:700}
+button.theme{border:0;background:var(--chip);padding:7px 12px;font-size:13px;font-weight:600}
+button.theme:hover{filter:brightness(.97)}
+.legend-note{margin:4px 0 8px;font-size:13px;color:var(--text-3)}
+h2{font-size:21px;font-weight:800;letter-spacing:-0.03em;margin:40px 0 14px}
+h2 small{font-size:13px;font-weight:500;color:var(--text-3)}
+.grid{gap:12px}
+.tile,.card,.day{border:0;border-radius:20px;background:var(--surface);box-shadow:none}
+.tile{padding:20px 20px 18px}
+.tile .lbl{font-size:14px;font-weight:500;color:var(--text-2)}
+.tile .lbl span.d{font-size:12px;color:var(--text-3);font-weight:400}
+.tile .val{font-size:26px;font-weight:700;margin:8px 0 6px;letter-spacing:-0.03em}
+.chg{display:inline-flex;align-items:center;gap:4px;font-size:14px;font-weight:600;padding:3px 9px;border-radius:8px}
+.chg.up{background:var(--up-soft)}.chg.down{background:var(--down-soft)}
+.chg.flat{padding:3px 0;background:none}
+.tile .note{font-size:13px;color:var(--text-3);margin-top:10px}
+.tile.hl{border:0;box-shadow:inset 0 0 0 2px var(--accent)}
+.card{padding:22px}
+.card h3{font-size:17px;font-weight:700;letter-spacing:-0.02em}
+.card .cap{font-size:13px;color:var(--text-3);margin-bottom:16px}
+#tip{background:#191f28;color:#fff;border-radius:12px;padding:10px 12px;font-size:13px;box-shadow:0 6px 24px rgba(0,0,0,.18)}
+details summary{color:var(--text-3);font-weight:500}
+td,th{border-bottom:1px solid var(--line);padding:7px 6px}
+.news h4{font-size:16px;font-weight:700;letter-spacing:-0.02em}
+.news .k{font-size:12px;letter-spacing:0;text-transform:none;color:var(--accent);font-weight:700}
+.news p{font-size:14px;line-height:1.6}
+.day{padding:18px}
+.day .dt{font-size:15px;font-weight:700}
+.day li{border-top:0;padding:5px 0;font-size:13.5px}
+.day li.star{color:var(--text);font-weight:700}
+.day.hot{border:0;box-shadow:inset 0 0 0 2px var(--accent)}
+.prob{height:40px;border-radius:12px;gap:3px}
+.prob div{font-size:13px}
+.dotrow .r{font-weight:600;color:var(--text)}
+.dotrow .d i{width:14px;height:14px}
+footer{border-top:0;background:var(--surface);border-radius:20px;padding:20px 22px;font-size:13px}
+footer a{color:var(--text-2);text-decoration:none}
+footer a:hover{text-decoration:underline}
+html.edit .edit-badge{background:var(--accent);color:#fff;border-radius:8px}
+html.edit .card,html.edit .tile,html.edit .day{outline:2px dashed var(--accent);outline-offset:3px}
+html.edit .edit-bar{background:var(--accent);color:#fff;border-radius:14px;padding:12px 16px;font-weight:500}
+@media (max-width:640px){h1{font-size:23px}h2{font-size:19px}.tile .val{font-size:22px}.card{padding:18px}}
+
+/* market tabs */
+.seg-wrap{position:sticky;top:env(safe-area-inset-top,0px);z-index:15;background:var(--bg);padding:10px 0 8px;margin:6px 0 0}
+.seg{display:flex;gap:4px;background:var(--chip);padding:4px;border-radius:14px;max-width:420px}
+.seg button{flex:1;font:inherit;font-size:15px;font-weight:600;color:var(--text-3);background:none;border:0;border-radius:11px;padding:9px 0;cursor:pointer;transition:background .15s,color .15s}
+.seg button[aria-selected="true"]{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+html.edit .seg-wrap{top:calc(env(safe-area-inset-top,0px) + 46px)}
+@media (prefers-reduced-motion:reduce){.seg button{transition:none}}
+
+[hidden]{display:none!important}
+.chgrow{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
+.chg{white-space:nowrap}
+.chgrow .pt{font-size:13px;color:var(--text-3);font-weight:500;white-space:nowrap}
+#rangeChart svg{max-width:620px}
+
+/* news-first layout */
+.num-sec{}
+html:not(.show-nums) .num-sec{display:none!important}
+.keys{grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr))}
+@media (max-width:560px){.keys{grid-template-columns:1fr 1fr}.key .bv{font-size:20px}}
+.today-card{grid-column:1/-1;padding:26px}
+.today-card h3{font-size:22px;font-weight:800;line-height:1.45;letter-spacing:-0.03em;margin:6px 0 16px;text-wrap:balance}
+.today-card .eyebrow{font-size:13px;font-weight:700;color:var(--accent)}
+.today-card ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.today-card li{font-size:15.5px;line-height:1.6;color:var(--text);padding:12px 14px;background:var(--surface-2);border-radius:14px}
+.key{display:flex;flex-direction:column;gap:6px}
+.key .nm{font-size:14px;color:var(--text-2);font-weight:500}
+.key .bv{font-size:24px;font-weight:800;letter-spacing:-0.03em}
+.key .ez{font-size:15px;font-weight:700}
+.key .ez.up{color:var(--up)}.key .ez.down{color:var(--down)}.key .ez.flat{color:var(--text-2)}
+.key .dt{font-size:12px;color:var(--text-3)}
+.news{grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr))}
+.news .card{padding:24px;display:flex;flex-direction:column;gap:10px}
+.news h4{font-size:19px;font-weight:800;line-height:1.4;margin:0;text-wrap:balance}
+.news .lbl2{font-size:12.5px;font-weight:700;color:var(--text-3);margin-top:4px}
+.news p{font-size:15px;line-height:1.7;color:var(--text);margin:0}
+.news p.why{color:var(--text-2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{font-size:13.5px;font-weight:700;padding:6px 11px;border-radius:10px;white-space:nowrap}
+.chip.up{background:var(--up-soft);color:var(--up)}.chip.down{background:var(--down-soft);color:var(--down)}
+.num-toggle-wrap{margin:40px 0 0;display:flex;flex-direction:column;align-items:center;gap:6px}
+.num-toggle{font:inherit;font-size:16px;font-weight:700;color:var(--text);background:var(--surface);border:0;border-radius:16px;padding:16px 28px;cursor:pointer;width:100%;max-width:420px}
+.num-toggle:hover{filter:brightness(.98)}
+.num-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num-toggle-note{font-size:13px;color:var(--text-3)}
+.legend-note b{color:var(--text-2)}
+</style>
+</head>
+<body>
+
+<script type="application/json" id="site-data">{"us":[{"n":"S&P 500","v":"7,182.78","p":-0.25,"pt":"-18.31","note":"장중 -3.2%까지 · 주간 +3.9% · 연초 +4.9%"},{"n":"나스닥 종합","v":"23,585.80","p":-0.62,"pt":"-147.73","note":"장중 -4.6%까지 · 주간 +4.3% · 연초 +1.5%"},{"n":"다우","v":"50,182.95","p":0.33,"pt":"+164.25","note":"장중 -1,100p 넘게 빠졌다 반전 · 3일 연속 상승"},{"n":"러셀 2000","v":"2,704.06","p":0.7,"pt":"+19.12","note":"중소형주 강세 · 주간 +4.7% · 연초 +9.0%"},{"n":"필라델피아 반도체","v":"—","p":-0.65,"pt":"","note":"엔비디아 -3.91%, 램리서치 -7.31%"},{"n":"VIX 공포지수","v":"≈28","p":null,"pt":"","note":"장중 35까지 상승 · 평소(15~20)보다 높음"}],"kr":[{"n":"코스피","v":"4,711.21","p":0.29,"pt":"+13.70","note":"장중 4,817.77(+2.56%) 찍고 반납 · 전날 -6.16%","hl":1},{"n":"코스닥","v":"655.71","p":0.78,"pt":"+5.07","note":"장중 673.57(+3.52%) → 저가 654.80 부근 마감"},{"n":"거래대금(코스피)","v":"12.28조","p":null,"pt":"","note":"작년 12/24 이후 정규장 최저 — 눈치 장"},{"n":"사이드카 누적","v":"102회","p":null,"pt":"","note":"올해 코스피 62 + 코스닥 40 · 2008년(45회)의 2배+"}],"range":[{"n":"S&P 500","lo":-3.2,"hi":0,"c":-0.25,"o":null,"t":"장중 최저 -3.2%(6,970.11) → -0.25% 마감"},{"n":"나스닥","lo":-4.6,"hi":0,"c":-0.62,"o":null,"t":"장중 최저 -4.6% → -0.62% 마감"},{"n":"다우","lo":-2.21,"hi":0.4,"c":0.33,"o":null,"t":"장중 최저 48,913.74(약 -2.2%) → +0.33% 마감"},{"n":"코스피","lo":0.29,"hi":2.56,"c":0.29,"o":1.01,"t":"시가 +1.01% → 고가 +2.56%(4,817.77) → +0.29% 마감"},{"n":"코스닥","lo":0.64,"hi":3.52,"c":0.78,"o":1.2,"t":"시가 658.46 → 고가 +3.52% → 저가 654.80 → +0.78% 마감"}],"kospi5":[["11/20",4869.96],["11/23",4708.54],["11/24",5006.03],["11/25",4697.51],["11/26",4711.21]],"flowKospi":[["기관",7508],["기타법인",4066],["외국인",-1137],["개인",-10438]],"flowKosdaq":[["기관",2331],["외국인",-1040],["개인",-1358]],"krStocks":[["삼성전기",3.84],["SK스퀘어",2.68],["SK하이닉스",2.23],["삼성생명",1.82],["삼성전자우",1.63],["삼성물산",0.82],["삼성전자",0.35],["셀트리온",-0.69],["KB금융",-1.89],["삼성바이오로직스",-1.91],["LG에너지솔루션",-2.11],["현대차",-3.9]],"krTips":{"SK하이닉스":"1,053,000원 · 장중 +6.6%까지 · 외국인 3,121억 순매수","삼성전자":"171,300원 · 장중 +3.51%까지 · 기관 3,220억 순매수","현대차":"미국 새 관세안(한국 약 15%) 영향 추정","삼성전기":"외국인 674억·기관 599억 동반 순매수"},"usStocks":[["HP (HPQ)",10.79],["차터 (CHTR)",7.01],["디어 (DE)",4.46],["앤트로픽",1.1],["엔비디아 (NVDA)",-3.91],["마이크론 (MU)",-4.53],["샌디스크 (SNDK)",-5.57],["램리서치 (LRCX)",-7.31]],"usTips":{"HP (HPQ)":"실적 예상 상회 · S&P 500 상승률 1위 · $30.95","디어 (DE)":"EPS $3.89로 예상 하회했지만 '농기계 경기 바닥' 발언 · 장중 -5.4%→+4.7%","엔비디아 (NVDA)":"$149.30 · 장중 -8~9% · 11월 약 -27% · S&P 신용등급 하향 검토","앤트로픽":"지난주 상장 · 여전히 공모가 $83 아래","램리서치 (LRCX)":"S&P 500 하락률 1위 · $181.82","샌디스크 (SNDK)":"한 달 약 -44% · 메모리 공급과잉 우려","마이크론 (MU)":"전날에도 -11% (목표가 하향)","차터 (CHTR)":"한 달 +29% 반등 흐름"},"krSector":[["오락·문화",2.63],["증권",2.6],["전기·전자",0.98],["통신",-1.93],["운송·창고",-2.26],["의료·정밀",-3.57]],"global":[["대만 가권",2.6,"11/26"],["항셍",1.9,"11/26 · 22,373.81"],["닛케이",1.3,"11/26 · 57,768.92"],["호주 ASX",0.9,"11/26 · 8,767.20"],["코스피",0.29,"11/26 종가"],["인도 센섹스",0.1,"11/26"],["상하이",-0.05,"11/26 · 3,475.46"],["FTSE 100",-0.32,"11/25 · ≈10,430"],["CAC 40",-0.75,"11/25 · 7,980.57"],["STOXX 600",-1.06,"11/25 · 626.03"],["DAX",-1.26,"11/25 · 24,702.13"]],"macro":[{"n":"원/달러","d":"11/26 주간 종가","v":"1,342.7원","p":-0.04,"pt":"-0.5원","note":"범위 1,339.3~1,344 · 금리인상·네고 vs 배당 송금"},{"n":"달러인덱스","d":"11/25","v":"≈103.7~104","p":null,"pt":"","note":"PCE 후 104.3 → 103.7 부근"},{"n":"엔/달러","d":"11/26 아시아","v":"159.12엔","p":-0.03,"pt":"-0.04엔","note":"엔화 약세 구간 유지"},{"n":"미 2년물","d":"11/25","v":"4.59%","p":null,"dir":-1,"pt":"-8bp","note":"주가 급락 → 국채로 피신"},{"n":"미 10년물","d":"11/25","v":"4.82%","p":null,"dir":-1,"pt":"-7bp","note":"11/26 아시아장 4.86% 안팎"},{"n":"WTI","d":"11/26 아시아","v":"$84.33","p":0.8,"pt":"","note":"후티 반군 사우디 시설 공격"},{"n":"브렌트","d":"11/26 아시아","v":"$91.11","p":0.5,"pt":"","note":"전쟁 전(2월) 약 $72"},{"n":"금","d":"11/26 오전","v":"≈$3,570","p":null,"pt":"","note":"PCE 직후 $3,426까지 급락 → 회복 · 한 달 -10%대"},{"n":"비트코인","d":"11/26 아시아","v":"≈$60,700","p":2.7,"pt":"","note":"25일 $57,240 저점 · ETF 7일 연속 유출"}],"news":[["🇺🇸 물가","미국 물가가 다시 올랐어요","미국의 물건·서비스 값이 1년 전보다 3.8% 올랐어요. 미국 중앙은행(연준)이 원하는 2%의 거의 두 배예요.","물가가 높으면 연준은 금리를 올려요. 금리가 오르면 돈 빌리기가 비싸져서, 기술주처럼 미래를 보고 사는 주식에 특히 불리해요.",[["12월 금리 인상 확률 98%","up"],["기술주","down"]]],["🇺🇸 AI","AI 대장주 엔비디아가 또 흔들렸어요","AI 칩 1등 회사 엔비디아의 CEO가 개인 문제로 물러났다가 이번 주 돌아왔는데, 신용평가사 S&P가 '경영이 불안하다'며 회사 신용등급을 낮출 수 있다고 경고했어요.","엔비디아는 AI 붐의 상징이라, 흔들리면 반도체·AI 주식이 같이 떨어져요. 한국의 삼성전자·SK하이닉스도 영향을 받아요.",[["엔비디아 -3.9%","down"],["반도체주","down"]]],["🇺🇸 시장","아침엔 폭락, 오후엔 거의 회복","나스닥이 하루 중 한때 4.6%까지 빠졌는데, '싸졌다'고 본 사람들이 다시 사면서 -0.6%로 끝났어요.","하루 안에 이렇게 크게 흔들린다는 건 투자자들이 그만큼 불안하다는 뜻이에요.",[["불안감","up"]]],["🇺🇸 경제","미국 경제가 생각보다 훨씬 잘 돌아가요","3분기 미국 경제 성장률이 4.3%로, 처음 발표(3.4%)보다 크게 올라갔어요.","경제가 좋은 건 좋은 소식이지만, 너무 뜨거우면 물가가 더 오를 수 있어서 '금리를 더 올려도 된다'는 신호로 읽혔어요.",[["금리 인상 가능성","up"]]],["🌐 관세","미국, 한국 포함 14개국에 새 관세","미국이 '너무 많이 만들어서 싸게 판다'는 이유로 중국에 20%, 한국·일본·유럽에 약 15% 관세를 매기겠다고 했어요. 빠르면 한 달 뒤 시작돼요.","관세가 붙으면 미국에 수출하는 회사(예: 현대차)에 부담이고, 미국 물가도 더 오를 수 있어요.",[["현대차 -3.9%","down"],["미국 물가","up"]]],["🇰🇷 금리","한국은행이 금리를 올렸어요 (3.25%)","한국은행이 기준금리를 3.00%에서 3.25%로 올렸어요. 올해만 세 번째예요.","반도체 수출이 너무 잘 돼서 경제가 빠르게 크고 물가도 오르고 있기 때문이에요. 대출 이자가 오를 수 있고, 주식엔 보통 부담이에요.",[["대출 이자","up"],["외국인 매도","down"]]],["🇰🇷 금리","한 번 더 올릴 수도 있대요","한은 위원들이 6개월 뒤 금리를 예상한 결과, 가운데 값이 3.50%였어요. '한 번 더 올릴 가능성이 높다'는 뜻이에요.","앞으로도 금리가 오를 수 있다는 신호라, 오늘 오르던 주식이 오후에 힘이 빠졌어요.",[["추가 인상 가능성","up"]]],["🇰🇷 증시","롤러코스터 코스피","코스피가 24일 +6%, 25일 -6%, 오늘 +0.3%로 크게 오르내렸어요. 너무 급하게 움직일 때 잠깐 멈추는 '사이드카'가 올해만 102번 걸렸어요. 역대 최다예요.","그만큼 시장이 불안하다는 뜻이에요. 오늘은 사겠다는 사람도 적어서 거래가 1년 만에 가장 적었어요.",[["불안감","up"],["거래량","down"]]],["🇰🇷 기업","SK하이닉스, 주주에게 100조 원 돌려준대요","SK하이닉스가 배당 30조 원 이상, 자기 주식을 사서 없애는 데 60조 원 이상 등 총 100조 원을 주주에게 돌려주겠다고 했어요. 작년의 약 7배예요.","회사가 번 돈을 주주에게 많이 나눠준다는 좋은 소식이에요. 오늘 외국인이 가장 많이 산 종목이에요.",[["SK하이닉스 +2.2%","up"]]],["🛢 유가","중동 긴장으로 기름값이 올랐어요","예멘 후티 반군이 사우디 정유시설을 공격했다는 소식에 유가가 올랐어요(미국 원유 배럴당 약 $84).","기름값이 오르면 비행기 연료비가 비싸져서 항공주가 떨어졌어요.",[["유가","up"],["항공주","down"]]]],"cal":[{"d":"11/26 (목)","w":"오늘","i":[["🇺🇸 추수감사절 — 미국 증시 휴장",0],["🇰🇷 한은 금리 3.25% 인상",0]]},{"d":"11/27 (금)","w":"","i":[["🇺🇸 블랙프라이데이 · 조기폐장 (한국 28일 03:00 · PT 10:00)",1],["🇰🇷 삼성전자 배당금 지급",0]]},{"d":"11/30 (월)","w":"","i":[["🇰🇷 10월 산업활동동향",0],["🇺🇸 정상 거래 재개",0]]},{"d":"12/1 (화)","w":"","i":[["🇰🇷 11월 수출입동향",1],["🇺🇸 ISM 제조업 PMI · JOLTS",0],["🇨🇳 제조업 PMI · 🇪🇺 CPI",0]]},{"d":"12/2 (수)","w":"","i":[["🇰🇷 11월 소비자물가",1],["🇺🇸 ADP 민간고용",0]]},{"d":"12/3 (목)","w":"","i":[["🇺🇸 실업수당 · ISM 서비스업",0],["🇨🇳 서비스업 PMI",0]]},{"d":"12/4 (금)","w":"★","hot":1,"i":[["🇺🇸 11월 고용보고서 (한국 22:30 · PT 05:30)",1],["🇨🇦 고용 · 🇪🇺 소매판매",0]]},{"d":"12/8~9","w":"★","hot":1,"i":[["🇺🇸 FOMC 금리 결정 + 점도표 (한국 10일 04:00 · PT 9일 11:00)",1]]},{"d":"12/10~15","w":"","i":[["🇺🇸 11월 CPI(10일) · PPI(15일)",0],["🇰🇷 동시만기(10일) · 지수 정기변경(11일)",0],["🇰🇷 금통위 의사록(15일)",0]]}],"meta":{"date":"2026-11-26","subtitle":"2026년 11월 26일(목) 브리핑 · 🇺🇸 11/25(수) 종가 · 🇰🇷 11/26(목) 종가","usLabel":"11/25(수) 종가","krLabel":"11/26(목) 종가","tags":[["🇺🇸 11/26","추수감사절 휴장"],["🇺🇸 11/27","조기폐장 (한국 28일 03:00)"],["🇰🇷 기준금리","3.25% (↑0.25%p)"]]},"fed":{"title":"🇺🇸 연준 12월 9일 결정 — 시장이 보는 확률","cap":"CME FedWatch, 11/25 PCE 발표 후 · 현재 3.75~4.00%","bars":[["0.25%p 인상",97.8,"up","→ 4.00~4.25%"],["동결",2.2,"neutral",""]],"note":"사실상 인상 확정 분위기. 관심은 \"그다음에 몇 번 더?\"로 이동. 근원 PCE 3.3%(예상 3.2%) · 3분기 GDP 4.3%(속보 3.4%)"},"bok":{"title":"🇰🇷 한은 점도표 — 6개월 뒤 기준금리 전망","cap":"위원 7명 × 점 3개 = 21개. 중간값 3.25% → 3.50%로 상승 → 추가 인상 시사","dots":[["3.75%",7],["3.50%",8],["3.25%",6]],"median":"3.50%","note":"찬성 5 · 동결 2(황건일·이수형) · 성장률 전망 올해 3.9% / 내년 4.1%(기존 2.9%) · 한미 금리차 0.75%p"},"flowNote":"외국인 순매수 1위 SK하이닉스 3,121억 · 기관 순매수 1위 삼성전자 3,220억","flowTips":{"외국인":"오전엔 한때 +2,300억 → 한은 금리 발표 후 매도 전환<br>전날(25일)엔 약 -1.9조","기관":"금융투자·연기금 중심","기타법인":"자사주 매입 등이 포함","개인":"1조 원 넘게 순매도"},"missing":"확인되지 않은 항목(코스피 장중 저가·마감 상승/하락 종목 수·S&P 11개 섹터 전체 순위)은 표시하지 않았습니다.","sources":[["AP — 미국 지수 11/25","https://mymotherlode.com/news/national/11340405/how-major-us-stock-indexes-fared-wednesday-11-25-2026.html"],["AP — 아시아 증시 11/26","https://www.wsls.com/business/2026/11/26/asian-shares-rebound-led-by-ai-stocks-after-wall-street-pares-sharp-losses/"],["CNBC — 라이브 업데이트·국채금리","https://www.cnbc.com/2026/11/24/stock-market-today-live-updates-.html"],["ChartMill — S&P 500 등락 상위","https://www.chartmill.com/news/PWR/Chartmill-59190-SP-500-Top-Movers-November-25-2026-Gainers-and-Losers"],["Yahoo Finance — 14개국 관세안","https://finance.yahoo.com/markets/article/us-announces-new-tariffs-of-up-to-20-on-china-the-eu-and-12-other-nations-131802359.html"],["KB증권 — 장마감 코멘트","https://kbthink.com/investment/today-pick/2611/261126-2.html"],["뉴스1 — 코스피 마감","https://www.news1.kr/finance/market-exr/6367384"],["SBS — 시총 상위·업종","https://news.sbs.co.kr/news/endPage.do?news_id=N1008865544"],["신현송 총재 일문일답","https://m.news.nate.com/view/20261126n24224"],["서울경제 — 원/달러 환율","https://www.sedaily.com/article/20119477"],["CME FedWatch 97.8%","https://marketspeaker.com/briefs/december-fed-rate-hike-odds-98-percent-cme-fedwatch/"],["Anadolu — 유럽 증시 마감","https://www.aa.com.tr/en/americas/us-stocks-close-mixed-amid-sticky-inflation-tariff-proposals/4138127"]],"today":{"title":"오늘 한 줄 요약","headline":"미국은 물가 걱정, 한국은 금리 인상. 어제 크게 떨어진 주식은 아주 조금만 회복했어요.","points":["🇺🇸 미국 물가가 다시 올라서, 미국 중앙은행이 12월에 금리를 올릴 게 거의 확실해졌어요.","🇺🇸 AI 대장주 엔비디아가 경영 문제로 또 흔들려, 기술주가 아침에 크게 빠졌다가 오후에 거의 회복했어요.","🌐 미국이 한국을 포함한 14개 나라에 새 관세를 매기겠다고 발표했어요.","🇰🇷 한국은행이 금리를 3.25%로 올렸고, 한 번 더 올릴 수도 있다고 했어요.","🇰🇷 코스피는 어제 6% 폭락한 뒤 오늘 0.29%만 올랐어요. 사려는 사람이 별로 없었어요."]},"keys":[["🇺🇸","S&P 500","-0.25%",-0.25,"조금 내렸어요","11/25"],["🇺🇸","나스닥","-0.62%",-0.62,"조금 내렸어요","11/25"],["🇰🇷","코스피","+0.29%",0.29,"조금 올랐어요","11/26"],["🇰🇷","원/달러 환율","1,342.7원",-0.04,"거의 그대로예요","11/26"]]}</script>
+<div id="tip"></div>
+<div class="wrap">
+
+<div class="edit-bar">편집 모드 · 번호로 말해주세요 (예: "3-2 그래프를 막대로", "6번 섹션에서 금 빼줘"). 주소 끝의 #edit을 지우면 일반 화면이에요.</div>
+<header class="top">
+  <div>
+    <h1>미국·한국 증시 데일리 대시보드</h1>
+    <div class="sub" id="subtitle"></div>
+  </div>
+  <div class="tags"><span id="tagList" style="display:contents"></span>
+    <button class="theme" id="themeBtn">라이트/다크</button>
+  </div>
+</header>
+<nav class="seg-wrap" aria-label="시장 선택"><div class="seg" role="tablist"><button role="tab" data-m="all" id="seg-all">전체</button><button role="tab" data-m="us" id="seg-us">🇺🇸 미국</button><button role="tab" data-m="kr" id="seg-kr">🇰🇷 한국</button></div></nav>
+<p class="legend-note">어려운 숫자 대신 <b>무슨 일이 있었고, 그래서 어떻게 됐는지</b> 쉽게 풀었어요. <span class="u">빨강 ↑ 올랐어요</span> · <span class="d">파랑 ↓ 내렸어요</span></p>
+
+<h2>☀️ 오늘 한눈에 <small id="todayLabel"></small></h2>
+<div class="grid keys" id="todayGrid"><div class="card today-card" id="today"></div></div>
+
+<h2>📰 오늘의 뉴스 <small>쉬운 말로 풀었어요</small></h2>
+<div class="grid news" id="news"></div>
+
+<h2>📅 주목할 일정 <small>🇰🇷 한국 시간 · 🇺🇸 캘리포니아 시간(PT) 함께 표기</small></h2>
+<div class="grid cal" id="cal"></div>
+
+
+<div class="num-toggle-wrap"><button class="num-toggle" id="numToggle" aria-expanded="false">📊 숫자로 자세히 보기</button><div class="num-toggle-note">지수·수급·종목 등락·환율·금리 차트</div></div>
+
+<h2 class="num-sec">🇺🇸 미국 주요 지수 <small id="usLabel"></small></h2>
+<div class="num-sec grid kpis" id="usKpi"></div>
+
+<h2 class="num-sec">🇰🇷 한국 지수 <small id="krLabel"></small></h2>
+<div class="num-sec grid kpis" id="krKpi"></div>
+
+<h2 class="num-sec">장중에 얼마나 흔들렸나 <small>종가만 보면 안 보이는 변동폭</small></h2>
+<div class="num-sec grid cards2">
+  <div class="card">
+    <h3>시가 · 장중 고점/저점 · 종가 (전일 대비 %)</h3>
+    <div class="cap">막대 = 장중 움직인 범위, 점 = 마감 위치. 미국은 폭락 후 회복, 한국은 급등 후 반납.</div>
+    <div id="rangeChart"></div>
+    <details><summary>표로 보기</summary><table id="rangeTbl"></table></details>
+  </div>
+  <div class="card">
+    <h3>코스피 최근 5거래일</h3>
+    <div class="cap">하루에 ±6%씩 움직인 롤러코스터 — 올해 사이드카 102회(역대 최다)</div>
+    <div id="kospiLine"></div>
+    <details><summary>표로 보기</summary><table id="kospiTbl"></table></details>
+  </div>
+</div>
+
+<h2 class="num-sec">🇰🇷 누가 사고 팔았나 <small>11/26 투자자별 순매수, 억 원</small></h2>
+<div class="num-sec grid cards2">
+  <div class="card">
+    <h3>코스피 수급</h3>
+    <div class="cap">기관이 받치고, 개인·외국인이 팔았다. 외국인은 금리 발표 뒤 매도로 전환.</div>
+    <div id="flowKospi"></div>
+  </div>
+  <div class="card">
+    <h3>코스닥 수급</h3>
+    <div class="cap">같은 구도: 기관 매수, 개인·외국인 매도</div>
+    <div id="flowKosdaq"></div>
+    <div class="cap" style="margin-top:14px;margin-bottom:4px;color:var(--text-2)" id="flowNote"></div>
+  </div>
+</div>
+
+<h2 class="num-sec">종목·업종 등락 <small>%</small></h2>
+<div class="num-sec grid cards2 wide">
+  <div class="card">
+    <h3>🇰🇷 코스피 시총 상위 (11/26)</h3>
+    <div class="cap">시총 10위권에선 반도체 관련주만 올랐다</div>
+    <div id="krStocks"></div>
+  </div>
+  <div class="card">
+    <h3>🇺🇸 크게 움직인 종목 (11/25)</h3>
+    <div class="cap">실적주(HP·디어)는 오르고, 반도체·메모리는 급락</div>
+    <div id="usStocks"></div>
+  </div>
+  <div class="card">
+    <h3>🇰🇷 업종 강약 (11/26)</h3>
+    <div class="cap">오락·증권 강세 / 의료정밀·운송 약세</div>
+    <div id="krSector"></div>
+  </div>
+  <div class="card">
+    <h3>🌏 해외 증시</h3>
+    <div class="cap">아시아 11/26 장중(AP 집계) · 유럽 11/25 종가 — 날짜가 섞여 있음</div>
+    <div id="global"></div>
+  </div>
+</div>
+
+<h2 class="num-sec">💱 환율 · 금리 · 원자재 · 코인</h2>
+<div class="num-sec grid kpis" id="macroKpi"></div>
+
+<h2 class="num-sec">🏦 금리 전망</h2>
+<div class="num-sec grid cards2">
+  <div class="card">
+    <h3 id="fedTitle"></h3>
+    <div class="cap" id="fedCap"></div>
+    <div class="prob" id="fedBar"></div>
+    <div style="font-size:13px;color:var(--text-2)" id="fedNote"></div>
+  </div>
+  <div class="card">
+    <h3 id="bokTitle"></h3>
+    <div class="cap" id="bokCap"></div>
+    <div class="dots" id="bokDots"></div>
+    <div style="font-size:12.5px;color:var(--text-2);margin-top:10px" id="bokNote"></div>
+  </div>
+</div>
+
+<footer>
+  수치는 모두 웹 검색으로 확인한 보도 기준이며, 매체별로 소수점 차이가 있을 수 있습니다. <span id="missing"></span>
+  <ol id="srcList"></ol>
+</footer>
+</div>
+
+<script>
+/* ---------- data (출처: 브리핑 본문) ---------- */
+const D = JSON.parse(document.getElementById("site-data").textContent);
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const tip=$("#tip");
+function showTip(e,html){tip.innerHTML=html;tip.style.opacity=1;const x=Math.min(e.clientX+14,innerWidth-tip.offsetWidth-8);tip.style.left=x+"px";tip.style.top=(e.clientY+14)+"px"}
+function hideTip(){tip.style.opacity=0}
+function bindTips(root){root.querySelectorAll("[data-tip]").forEach(el=>{el.addEventListener("mousemove",e=>showTip(e,el.dataset.tip));el.addEventListener("mouseleave",hideTip)})}
+const fmtP=p=>(p>0?"+":"")+p.toFixed(2)+"%";
+const cls=p=>p>0?"up":p<0?"down":"flat";
+const arrow=p=>p>0?"▲":p<0?"▼":"■";
+const esc=s=>String(s).replace(/"/g,"&quot;");
+
+/* ---------- KPI tiles ---------- */
+function tiles(el,arr){
+  el.innerHTML=arr.map(t=>{
+    let chg="";
+    if(t.p!=null) chg=`<div class="chgrow"><span class="chg ${cls(t.p)} num">${arrow(t.p)} ${fmtP(t.p)}</span>${t.pt?`<span class="pt num">${t.pt}</span>`:""}</div>`;
+    else if(t.dir) chg=`<div class="chgrow"><span class="chg ${t.dir>0?"up":"down"} num">${t.dir>0?"▲":"▼"} ${t.pt}</span></div>`;
+    else chg=`<div class="chgrow"><span class="chg flat">&nbsp;</span></div>`;
+    return `<div class="tile ${t.hl?"hl":""}" data-tip="${esc("<b>"+t.n+"</b><br>"+t.note)}"><div class="lbl">${t.n}${t.d?`<span class="d">${t.d}</span>`:""}</div><div class="val num">${t.v}</div>${chg}<div class="note">${t.note}</div></div>`;
+  }).join("");
+  bindTips(el);
+}
+tiles($("#usKpi"),D.us);tiles($("#krKpi"),D.kr);tiles($("#macroKpi"),D.macro);
+
+/* ---------- diverging horizontal bars ---------- */
+function hbars(el,rows,{unit="%",fmt,tips={},sub={}}={}){
+  const W=560,rowH=30,labW=128,valW=100,top=8;
+  const H=top+rows.length*rowH+18;
+  const max=Math.max(...rows.map(r=>Math.abs(r[1])));
+  const hasNeg=rows.some(r=>r[1]<0),hasPos=rows.some(r=>r[1]>0);
+  const plotL=labW,plotR=W-valW;
+  const zero=hasNeg&&hasPos? plotL+(plotR-plotL)*(rows.filter(r=>r[1]<0).reduce((m,r)=>Math.max(m,-r[1]),0)/(max+ rows.filter(r=>r[1]>0).reduce((m,r)=>Math.max(m,r[1]),0))) : (hasNeg?plotR:plotL);
+  const posMax=Math.max(0,...rows.map(r=>r[1])),negMax=Math.max(0,...rows.map(r=>-r[1]));
+  const scale=(plotR-plotL)/(posMax+negMax||1);
+  const z=plotL+negMax*scale;
+  const f=fmt||(v=>(v>0?"+":"")+v.toFixed(2)+unit);
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img">`;
+  s+=`<line x1="${z}" x2="${z}" y1="${top-4}" y2="${H-14}" stroke="var(--neutral)" stroke-width="1"/>`;
+  rows.forEach((r,i)=>{
+    const y=top+i*rowH, v=r[1], w=Math.max(2,Math.abs(v)*scale), x=v>=0?z:z-w;
+    const col=v>=0?"var(--up)":"var(--down)";
+    const rx=Math.min(6,w/2);
+    // rounded data-end only
+    const path=v>=0
+      ? `M${x},${y+5}h${w-rx}a${rx},${rx} 0 0 1 ${rx},${rx}v${18-2*rx}a${rx},${rx} 0 0 1 -${rx},${rx}h-${w-rx}z`
+      : `M${x+w},${y+5}h-${w-rx}a${rx},${rx} 0 0 0 -${rx},${rx}v${18-2*rx}a${rx},${rx} 0 0 0 ${rx},${rx}h${w-rx}z`;
+    const t=`<b>${r[0]}</b> ${arrow(v)} ${f(v)}${tips[r[0]]?"<br>"+tips[r[0]]:""}${r[2]?"<br><span style='opacity:.75'>"+r[2]+"</span>":""}`;
+    s+=`<g class="row" data-tip="${esc(t)}"><rect class="hit" x="0" y="${y}" width="${W}" height="${rowH}"/>`;
+    s+=`<text class="lab" x="${labW-10}" y="${y+19}" text-anchor="end">${r[0]}</text>`;
+    s+=`<path class="bar" d="${path}" fill="${col}"/>`;
+    s+=`<text class="mono" x="${W-2}" y="${y+19}" text-anchor="end" style="fill:${v>=0?"var(--up)":"var(--down)"};font-weight:700;font-size:12.5px">${arrow(v)} ${f(v)}</text></g>`;
+  });
+  s+=`</svg>`;
+  el.innerHTML=s;bindTips(el);
+}
+hbars($("#krStocks"),D.krStocks,{tips:D.krTips});
+hbars($("#usStocks"),D.usStocks,{tips:D.usTips});
+hbars($("#krSector"),D.krSector);
+hbars($("#global"),D.global.map(g=>[g[0],g[1],g[2]]));
+const won=v=>(v>0?"+":"")+Math.round(v).toLocaleString("ko-KR")+"억";
+hbars($("#flowKospi"),D.flowKospi,{fmt:won,tips:D.flowTips||{}});
+hbars($("#flowKosdaq"),D.flowKosdaq,{fmt:won});
+
+/* ---------- intraday range chart ---------- */
+function drawRange(rows){
+  const W=560,rowH=40,labW=80,top=24,H=top+rows.length*rowH+20;
+  const mn=-5,mx=4,L=labW,R=W-16,sx=v=>L+(v-mn)/(mx-mn)*(R-L);
+  let s=`<svg viewBox="0 0 ${W} ${H}">`;
+  for(let v=mn;v<=mx;v++){const x=sx(v);s+=`<line x1="${x}" x2="${x}" y1="${top-6}" y2="${H-16}" stroke="${v===0?"var(--neutral)":"var(--grid)"}" stroke-width="1"/>`;s+=`<text class="mono" x="${x}" y="${top-10}" text-anchor="middle">${v>0?"+":""}${v}%</text>`}
+  rows.forEach((r,i)=>{
+    const y=top+i*rowH+10;
+    const x1=sx(r.lo),x2=sx(r.hi);
+    s+=`<g class="row" data-tip="${esc("<b>"+r.n+"</b><br>"+r.t)}"><rect class="hit" x="0" y="${y-12}" width="${W}" height="${rowH}"/>`;
+    s+=`<text class="lab" x="${labW-10}" y="${y+5}" text-anchor="end">${r.n}</text>`;
+    s+=`<rect x="${Math.min(x1,x2)}" y="${y-5}" width="${Math.max(3,Math.abs(x2-x1))}" height="10" rx="4" fill="${r.c>=0&&r.lo>=0?"var(--up-soft)":"var(--down-soft)"}" stroke="${r.lo<0?"var(--down)":"var(--up)"}" stroke-width="1"/>`;
+    if(r.o!=null) s+=`<line x1="${sx(r.o)}" x2="${sx(r.o)}" y1="${y-9}" y2="${y+9}" stroke="var(--text-2)" stroke-width="2"/>`;
+    const cx=sx(r.c);
+    s+=`<circle cx="${cx}" cy="${y}" r="6" fill="${r.c>=0?"var(--up)":"var(--down)"}" stroke="var(--surface)" stroke-width="2"/>`;
+    s+=`<text class="mono" x="${cx}" y="${y+22}" text-anchor="middle" style="fill:var(--text)">${fmtP(r.c)}</text></g>`;
+  });
+  s+=`</svg><div style="font-size:11.5px;color:var(--text-3);margin-top:4px">● 종가 &nbsp; │ 시가(한국만) &nbsp; ▭ 장중 범위</div>`;
+  $("#rangeChart").innerHTML=s;bindTips($("#rangeChart"));
+  $("#rangeTbl").innerHTML="<tr><th>지수</th><th class='r'>장중 저점</th><th class='r'>장중 고점</th><th class='r'>종가</th></tr>"+rows.map(r=>`<tr><td>${r.n}</td><td class="r num">${fmtP(r.lo)}</td><td class="r num">${fmtP(r.hi)}</td><td class="r num">${fmtP(r.c)}</td></tr>`).join("");
+}
+drawRange(D.range);
+
+/* ---------- KOSPI 5-day line ---------- */
+(function(){
+  const d=D.kospi5,W=560,H=230,L=52,R=W-20,T=20,B=H-30;
+  const mn=4600,mx=5100,sx=i=>L+i*(R-L)/(d.length-1),sy=v=>B-(v-mn)/(mx-mn)*(B-T);
+  let s=`<svg viewBox="0 0 ${W} ${H}">`;
+  for(let v=mn;v<=mx;v+=100){s+=`<line x1="${L}" x2="${R}" y1="${sy(v)}" y2="${sy(v)}" stroke="${v===5000?"var(--neutral)":"var(--grid)"}" ${v===5000?'stroke-dasharray="4 3"':""}/>`;s+=`<text class="mono" x="${L-8}" y="${sy(v)+4}" text-anchor="end">${v.toLocaleString()}</text>`}
+  s+=`<text x="${R}" y="${sy(5000)-6}" text-anchor="end" style="font-size:10.5px">5,000선</text>`;
+  s+=`<polygon fill="var(--down-soft)" points="${sx(0)},${B} ${d.map((p,i)=>sx(i)+","+sy(p[1])).join(" ")} ${sx(d.length-1)},${B}"/>`;
+  s+=`<polyline fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" points="${d.map((p,i)=>sx(i)+","+sy(p[1])).join(" ")}"/>`;
+  d.forEach((p,i)=>{
+    const prev=i?d[i-1][1]:null,ch=prev?(p[1]/prev-1)*100:null;
+    const col=ch==null?"var(--text-2)":ch>=0?"var(--up)":"var(--down)";
+    const t=`<b>${p[0]}</b> ${p[1].toLocaleString("ko-KR",{minimumFractionDigits:2})}${ch!=null?"<br>"+arrow(ch)+" "+fmtP(ch):""}`;
+    s+=`<g data-tip="${esc(t)}"><rect class="hit" x="${sx(i)-40}" y="${T}" width="80" height="${B-T}"/>`;
+    s+=`<circle cx="${sx(i)}" cy="${sy(p[1])}" r="5" fill="${col}" stroke="var(--surface)" stroke-width="2"/>`;
+    s+=`<text x="${sx(i)}" y="${H-10}" text-anchor="middle">${p[0]}</text>`;
+    if(ch!=null&&Math.abs(ch)>5) s+=`<text class="mono" x="${sx(i)}" y="${sy(p[1])+(ch>0?-12:20)}" text-anchor="middle" style="fill:var(--text);font-weight:500">${fmtP(ch)}</text>`;
+    s+=`</g>`;
+  });
+  s+=`</svg>`;
+  $("#kospiLine").innerHTML=s;bindTips($("#kospiLine"));
+  $("#kospiTbl").innerHTML="<tr><th>날짜</th><th class='r'>종가</th><th class='r'>변동</th></tr>"+d.map((p,i)=>`<tr><td>${p[0]}</td><td class="r num">${p[1].toLocaleString("ko-KR",{minimumFractionDigits:2})}</td><td class="r num">${i?fmtP((p[1]/d[i-1][1]-1)*100):"—"}</td></tr>`).join("");
+})();
+
+/* ---------- header, Fed & BOK ---------- */
+const T=(id,v,html)=>{const e=document.getElementById(id);if(e)e[html?"innerHTML":"textContent"]=v||""};
+T("subtitle",D.meta.subtitle);T("usLabel",D.meta.usLabel);T("krLabel",D.meta.krLabel);T("missing",D.missing);
+$("#tagList").innerHTML=(D.meta.tags||[]).map(t=>`<span class="tag">${t[0]} <b>${t[1]}</b></span>`).join("");
+T("fedTitle",D.fed.title);T("fedCap",D.fed.cap);T("fedNote",D.fed.note);
+$("#fedBar").innerHTML=D.fed.bars.map(b=>`<div style="flex:${b[1]};background:var(--${b[2]});color:#fff" data-tip="${esc("<b>"+b[0]+"</b> "+b[1]+"%"+(b[3]?"<br>"+b[3]:""))}">${b[1]>15?`<b>${b[0]} ${b[1]}%</b>`:""}</div>`).join("");
+bindTips($("#fedBar"));
+T("bokTitle",D.bok.title);T("bokCap",D.bok.cap);T("bokNote",D.bok.note);
+$("#bokDots").innerHTML=D.bok.dots.map(([r,n])=>`<div class="dotrow" data-tip="<b>${r}</b> — 점 ${n}개"><span class="r num">${r}${r===D.bok.median?" ◀":""}</span><span class="d">${"<i></i>".repeat(n)}</span><span style="color:var(--text-3)">${n}</span></div>`).join("");
+bindTips($("#bokDots"));
+T("flowNote",D.flowNote);
+$("#srcList").innerHTML=(D.sources||[]).map(([t,u])=>`<li><a href="${esc(u)}" target="_blank" rel="noopener">${t}</a></li>`).join("");
+
+/* ---------- news & calendar ---------- */
+$("#news").innerHTML=D.news.map(n=>{
+  if(n.length<4) return `<div class="card"><div class="k">${n[0]}</div><h4>${n[1]}</h4><p>${n[2]}</p></div>`;
+  const chips=(n[4]||[]).map(c=>`<span class="chip ${c[1]}">${c[1]==="up"?"↑":"↓"} ${c[0]}</span>`).join("");
+  return `<div class="card"><div class="k">${n[0]}</div><h4>${n[1]}</h4><div class="lbl2">무슨 일이에요?</div><p>${n[2]}</p><div class="lbl2">그래서 어떻게 돼요?</div><p class="why">${n[3]}</p>${chips?`<div class="chips">${chips}</div>`:""}</div>`;
+}).join("");
+/* today summary + key numbers */
+if(D.today){
+  $("#today").innerHTML=`<div class="eyebrow">${D.today.title||"오늘 한 줄 요약"}</div><h3>${D.today.headline}</h3><ul>${(D.today.points||[]).map(p=>`<li>${p}</li>`).join("")}</ul>`;
+}
+T("todayLabel",D.meta.subtitle);
+(D.keys||[]).forEach(k=>{
+  const c=k[3]>0.1?"up":k[3]<-0.1?"down":"flat";
+  const el=document.createElement("div");el.className="tile key";el.dataset.mkt=k[0]==="🇺🇸"?"us":k[0]==="🇰🇷"?"kr":"all";
+  el.innerHTML=`<div class="nm">${k[0]} ${k[1]}</div><div class="bv num">${k[2]}</div><div class="ez ${c}">${c==="up"?"↑":c==="down"?"↓":"→"} ${k[4]}</div><div class="dt">${k[5]} 기준</div>`;
+  $("#todayGrid").appendChild(el);
+});
+$("#cal").innerHTML=D.cal.map(c=>`<div class="day ${c.hot?"hot":""}"><div class="dt">${c.d}<span>${c.w}</span></div><ul>${c.i.map(([t,s])=>`<li class="${s?"star":""}">${t}</li>`).join("")}</ul></div>`).join("");
+
+/* ---------- theme toggle ---------- */
+$("#themeBtn").onclick=()=>{const r=document.documentElement;const dark=r.dataset.theme?r.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;r.dataset.theme=dark?"light":"dark"};
+
+/* ---------- edit mode labels ---------- */
+(function(){
+  let n=0;
+  document.querySelectorAll(".wrap > h2").forEach(h=>{
+    n++;const b=document.createElement("span");b.className="edit-badge";b.textContent=n;h.prepend(b);
+    let g=h.nextElementSibling;
+    if(g&&g.classList.contains("grid")){let m=0;[...g.children].forEach(c=>{m++;const x=document.createElement("span");x.className="edit-badge";x.textContent=n+"-"+m;c.appendChild(x)})}
+  });
+  const set=()=>document.documentElement.classList.toggle("edit",location.hash==="#edit");
+  set();addEventListener("hashchange",set);
+})();
+
+/* ---------- market tabs (전체 / 미국 / 한국) ---------- */
+(function(){
+  const card=id=>{const e=document.getElementById(id);return e&&e.closest(".card,.tile")||e};
+  const mark=(el,m)=>{if(el)el.dataset.mkt=m};
+  const sec=id=>{const g=document.getElementById(id);return g&&g.closest(".grid")};
+  // whole groups
+  document.querySelectorAll("#usKpi > *").forEach(e=>mark(e,"us"));
+  document.querySelectorAll("#krKpi > *").forEach(e=>mark(e,"kr"));
+  mark(card("rangeChart"),"all");mark(card("kospiLine"),"kr");
+  mark(card("flowKospi"),"kr");mark(card("flowKosdaq"),"kr");
+  mark(card("krStocks"),"kr");mark(card("usStocks"),"us");mark(card("krSector"),"kr");mark(card("global"),"all");
+  document.querySelectorAll("#macroKpi > *").forEach(e=>mark(e,"all"));
+  mark(card("fedBar"),"us");mark(card("bokDots"),"kr");
+  const flag=t=>t.startsWith("🇺🇸")?"us":t.startsWith("🇰🇷")?"kr":"all";
+  document.querySelectorAll("#news > .card").forEach((e,i)=>mark(e,flag((D.news[i]||[""])[0])));
+  document.querySelectorAll("#cal li").forEach(li=>mark(li,flag(li.textContent.trim())));
+  document.querySelectorAll("#today li").forEach(li=>mark(li,flag(li.textContent.trim())));
+  const US=["S&P 500","나스닥","다우","러셀 2000","나스닥 100"];
+  let cur="all";
+  function apply(m){
+    cur=m;
+    const vis=e=>m==="all"||e.dataset.mkt==="all"||e.dataset.mkt===m;
+    document.querySelectorAll("[data-mkt]").forEach(e=>{e.hidden=!vis(e)});
+    document.querySelectorAll("#cal .day").forEach(d=>{const lis=[...d.querySelectorAll("li")];d.hidden=lis.length>0&&lis.every(li=>li.hidden)});
+    // range chart shows only that market's indices
+    drawRange(m==="all"?D.range:D.range.filter(r=>(US.includes(r.n))===(m==="us")));
+    // hide a section heading when nothing under it is visible
+    document.querySelectorAll(".wrap > h2").forEach(h=>{const g=h.nextElementSibling;if(!g||!g.classList.contains("grid"))return;const any=[...g.children].some(c=>!c.hidden);h.hidden=!any;g.hidden=!any});
+    document.querySelectorAll(".seg button").forEach(b=>b.setAttribute("aria-selected",b.dataset.m===m));
+    try{localStorage.setItem("mkt",m)}catch(e){}
+  }
+  document.querySelectorAll(".seg button").forEach(b=>b.addEventListener("click",()=>apply(b.dataset.m)));
+  let saved="all";try{saved=localStorage.getItem("mkt")||"all"}catch(e){}
+  apply(["all","us","kr"].includes(saved)?saved:"all");
+})();
+
+/* ---------- numbers toggle ---------- */
+(function(){
+  const b=$("#numToggle"),r=document.documentElement;
+  const set=on=>{r.classList.toggle("show-nums",on);b.setAttribute("aria-expanded",on);b.textContent=on?"📊 숫자 접기":"📊 숫자로 자세히 보기";try{localStorage.setItem("nums",on?"1":"0")}catch(e){}};
+  let on=false;try{on=localStorage.getItem("nums")==="1"}catch(e){}
+  if(location.hash==="#edit")on=true;
+  set(on);b.addEventListener("click",()=>{const v=!r.classList.contains("show-nums");set(v);if(v)b.scrollIntoView({behavior:"smooth",block:"start"})});
+})();
+</script>
+
+</body>
+</html>
